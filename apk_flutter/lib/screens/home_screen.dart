@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/corpus_item.dart';
 import '../services/api_client.dart';
+import 'history_screen.dart';
 import 'practice_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,7 +33,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('中文发音练习')),
+      appBar: AppBar(
+        title: const Text('中文发音练习'),
+        actions: [
+          IconButton(
+            tooltip: '练习历史',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HistoryScreen()),
+              );
+            },
+            icon: const Icon(Icons.history),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(

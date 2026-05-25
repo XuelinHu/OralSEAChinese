@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/corpus_item.dart';
+import '../models/practice_history.dart';
 import '../models/pronunciation_score.dart';
 
 class ApiClient {
@@ -36,5 +37,33 @@ class ApiClient {
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     return PronunciationScore.fromJson(data['score'] as Map<String, dynamic>);
+  }
+
+  Future<List<PracticeHistoryItem>> fetchPracticeHistory() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/practice/history'));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load practice history: ${response.statusCode}');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = data['items'] as List<dynamic>;
+    return items.map((item) => PracticeHistoryItem.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  Future<PracticeDetail> fetchPracticeDetail(String practiceRecordId) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/practice/$practiceRecordId'));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load practice detail: ${response.statusCode}');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return PracticeDetail.fromJson(data['item'] as Map<String, dynamic>);
+  }
+
+  String resolveMediaUrl(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    return '$baseUrl$path';
   }
 }

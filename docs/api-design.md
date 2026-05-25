@@ -12,6 +12,8 @@
 | GET | `/api/v1/courses/:courseId/lessons` | 课时列表 |
 | GET | `/api/v1/corpus?type=sentence` | 语料列表，支持 `pinyin`、`word`、`sentence` |
 | POST | `/api/v1/practice/evaluate` | 上传录音并调用 AI 评分 |
+| GET | `/api/v1/practice/history` | 学习者练习历史 |
+| GET | `/api/v1/practice/:id` | 学习者练习详情 |
 | GET | `/api/v1/admin/corpus` | 管理端语料列表 |
 | POST | `/api/v1/admin/corpus` | 管理端新增语料 |
 | PUT | `/api/v1/admin/corpus/:id` | 管理端编辑语料 |

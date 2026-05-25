@@ -496,6 +496,61 @@ export async function listPracticeScores(limit = 50) {
   }));
 }
 
+export async function listPracticeHistory(limit = 50) {
+  if (!hasDatabase()) {
+    return [];
+  }
+
+  const result = await pool.query(
+    `
+      SELECT
+        pr.id AS practice_record_id,
+        pr.created_at,
+        aa.storage_path,
+        aa.duration_ms,
+        ci.id AS corpus_item_id,
+        ci.hanzi,
+        ci.pinyin,
+        ci.item_type,
+        ps.overall_score,
+        ps.accuracy_score,
+        ps.fluency_score,
+        ps.tone_score
+      FROM practice_record pr
+      JOIN corpus_item ci ON ci.id = pr.corpus_item_id
+      LEFT JOIN audio_asset aa ON aa.id = pr.learner_audio_id
+      JOIN pronunciation_score ps ON ps.practice_record_id = pr.id
+      WHERE pr.user_id = $1
+      ORDER BY pr.created_at DESC
+      LIMIT $2
+    `,
+    [demoUserId, limit],
+  );
+
+  return result.rows.map((row) => ({
+    practiceRecordId: row.practice_record_id,
+    createdAt: row.created_at,
+    audioUrl: row.storage_path,
+    durationMs: row.duration_ms,
+    corpusItem: {
+      id: row.corpus_item_id,
+      hanzi: row.hanzi,
+      pinyin: row.pinyin,
+      type: row.item_type,
+    },
+    score: {
+      overallScore: Number(row.overall_score),
+      accuracyScore: Number(row.accuracy_score),
+      fluencyScore: Number(row.fluency_score),
+      toneScore: Number(row.tone_score),
+    },
+  }));
+}
+
+export async function getPracticeDetail(id) {
+  return getPracticeScore(id);
+}
+
 export async function getPracticeScore(id) {
   if (!hasDatabase()) {
     return null;

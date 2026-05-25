@@ -113,6 +113,19 @@ async function main() {
     if (!result.score?.overall_score) {
       throw new Error("missing pronunciation score");
     }
+    const historyResponse = await fetch(`${baseUrl}/api/v1/practice/history`);
+    if (!historyResponse.ok) {
+      throw new Error(`practice history failed: ${historyResponse.status} ${await historyResponse.text()}`);
+    }
+    const history = await historyResponse.json();
+    if (result.persistence?.persisted && !history.items?.some((item) => item.practiceRecordId === result.practiceRecordId)) {
+      throw new Error("new practice record missing from history");
+    }
+
+    const practiceDetailResponse = await fetch(`${baseUrl}/api/v1/practice/${result.practiceRecordId}`);
+    if (result.persistence?.persisted && !practiceDetailResponse.ok) {
+      throw new Error(`practice detail failed: ${practiceDetailResponse.status} ${await practiceDetailResponse.text()}`);
+    }
     if (result.persistence?.persisted) {
       const detailResponse = await fetch(`${baseUrl}/api/v1/admin/practice-scores/${result.practiceRecordId}`);
       if (!detailResponse.ok) {

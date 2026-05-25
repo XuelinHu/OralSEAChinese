@@ -16,12 +16,14 @@ import {
   deleteCorpusItem,
   deleteAnnotation,
   getPracticeScore,
+  getPracticeDetail,
   getCorpusItem,
   listCorpusItems,
   listCourses,
   listAnnotations,
   listLessons,
   listPracticeScores,
+  listPracticeHistory,
   savePracticeEvaluation,
   updateCourse,
   updateAnnotation,
@@ -256,6 +258,28 @@ export function createApp() {
       const item = await getPracticeScore(req.params.id);
       if (!item) {
         res.status(404).json({ error: "Practice score not found" });
+        return;
+      }
+      res.json({ item });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/v1/practice/history", async (req, res, next) => {
+    try {
+      const limit = Math.min(Number(req.query.limit || 50), 200);
+      res.json({ items: await listPracticeHistory(limit) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/v1/practice/:id", async (req, res, next) => {
+    try {
+      const item = await getPracticeDetail(req.params.id);
+      if (!item) {
+        res.status(404).json({ error: "Practice record not found" });
         return;
       }
       res.json({ item });
