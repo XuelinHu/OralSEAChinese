@@ -1,7 +1,8 @@
 from uuid import uuid4
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
 
+from .audio_utils import analyze_wav_duration
 from .evaluator import evaluate_pronunciation
 from .schemas import EvaluateRequest, EvaluateResponse, TrainRequest
 
@@ -16,6 +17,18 @@ def health() -> dict[str, str]:
 @app.post("/api/v1/pronunciation/evaluate", response_model=EvaluateResponse)
 def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
     return evaluate_pronunciation(payload)
+
+
+@app.post("/api/v1/audio/analyze")
+async def analyze_audio(audio: UploadFile = File(...)) -> dict[str, object]:
+    content = await audio.read()
+    analysis = analyze_wav_duration(content)
+    return {
+        "filename": audio.filename,
+        "content_type": audio.content_type,
+        "size": len(content),
+        "analysis": analysis,
+    }
 
 
 @app.get("/api/v1/model/versions")

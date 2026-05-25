@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 
 import cors from "cors";
 import express from "express";
@@ -7,23 +9,40 @@ import multer from "multer";
 import { evaluatePronunciation } from "./aiClient.js";
 import {
   healthCheckDatabase,
+  createCourse,
   createCorpusItem,
+  createLesson,
   deleteCorpusItem,
+  getPracticeScore,
   getCorpusItem,
   listCorpusItems,
   listCourses,
   listLessons,
   listPracticeScores,
   savePracticeEvaluation,
+  updateCourse,
   updateCorpusItem,
+  updateLesson,
 } from "./repository.js";
+import { config } from "./config.js";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const uploadRoot = path.resolve(process.cwd(), config.uploadDir);
+fs.mkdirSync(uploadRoot, { recursive: true });
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, callback) => callback(null, uploadRoot),
+    filename: (_req, file, callback) => {
+      const safeName = file.originalname.replace(/[^\w.-]/g, "_");
+      callback(null, `${Date.now()}-${crypto.randomUUID()}-${safeName}`);
+    },
+  }),
+});
 
 export function createApp() {
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: "2mb" }));
+  app.use("/uploads", express.static(uploadRoot));
 
   app.get("/health", async (_req, res, next) => {
     try {
@@ -94,6 +113,84 @@ export function createApp() {
     }
   });
 
+  app.get("/api/v1/admin/courses", async (_req, res, next) => {
+    try {
+      res.json({ items: await listCourses() });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/v1/admin/courses", async (req, res, next) => {
+    try {
+      const validationError = validateCoursePayload(req.body);
+      if (validationError) {
+        res.status(400).json({ error: validationError });
+        return;
+      }
+      res.status(201).json({ item: await createCourse(req.body) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/v1/admin/courses/:id", async (req, res, next) => {
+    try {
+      const validationError = validateCoursePayload(req.body);
+      if (validationError) {
+        res.status(400).json({ error: validationError });
+        return;
+      }
+      const item = await updateCourse(req.params.id, req.body);
+      if (!item) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+      res.json({ item });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/v1/admin/courses/:courseId/lessons", async (req, res, next) => {
+    try {
+      res.json({ items: await listLessons(req.params.courseId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/v1/admin/lessons", async (req, res, next) => {
+    try {
+      const validationError = validateLessonPayload(req.body);
+      if (validationError) {
+        res.status(400).json({ error: validationError });
+        return;
+      }
+      res.status(201).json({ item: await createLesson(req.body) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/v1/admin/lessons/:id", async (req, res, next) => {
+    try {
+      const validationError = validateLessonPayload(req.body);
+      if (validationError) {
+        res.status(400).json({ error: validationError });
+        return;
+      }
+      const item = await updateLesson(req.params.id, req.body);
+      if (!item) {
+        res.status(404).json({ error: "Lesson not found" });
+        return;
+      }
+      res.json({ item });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/v1/admin/corpus", async (req, res, next) => {
     try {
       const validationError = validateCorpusPayload(req.body);
@@ -150,6 +247,19 @@ export function createApp() {
     }
   });
 
+  app.get("/api/v1/admin/practice-scores/:id", async (req, res, next) => {
+    try {
+      const item = await getPracticeScore(req.params.id);
+      if (!item) {
+        res.status(404).json({ error: "Practice score not found" });
+        return;
+      }
+      res.json({ item });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/v1/practice/evaluate", upload.single("audio"), async (req, res, next) => {
     try {
       const corpusItem = await getCorpusItem(req.body.corpusItemId);
@@ -166,14 +276,14 @@ export function createApp() {
         corpus_type: corpusItem.type,
         hanzi: corpusItem.hanzi,
         pinyin: corpusItem.pinyin,
-        audio_url: audioSize > 0 ? `memory://${req.file.originalname}` : null,
+        audio_url: audioSize > 0 ? `/uploads/${req.file.filename}` : null,
         duration_ms: Number(req.body.durationMs || 0) || null,
       });
       const audio = {
         received: audioSize > 0,
         size: audioSize,
         filename: req.file?.originalname || null,
-        storagePath: audioSize > 0 ? `memory://${req.file.originalname}` : null,
+        storagePath: audioSize > 0 ? `/uploads/${req.file.filename}` : null,
         mimeType: req.file?.mimetype || "audio/wav",
         durationMs: Number(req.body.durationMs || 0) || null,
       };
@@ -201,6 +311,23 @@ export function createApp() {
   });
 
   return app;
+}
+
+function validateCoursePayload(payload) {
+  if (!payload.title || typeof payload.title !== "string") {
+    return "title is required";
+  }
+  return null;
+}
+
+function validateLessonPayload(payload) {
+  if (!payload.courseId || typeof payload.courseId !== "string") {
+    return "courseId is required";
+  }
+  if (!payload.title || typeof payload.title !== "string") {
+    return "title is required";
+  }
+  return null;
 }
 
 function validateCorpusPayload(payload) {

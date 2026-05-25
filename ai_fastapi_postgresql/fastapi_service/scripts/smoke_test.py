@@ -28,7 +28,26 @@ def main() -> None:
     data = response.json()
     assert data["model_version"] == "mock-v1"
     assert data["overall_score"] > 0
+    audio_response = client.post(
+        "/api/v1/audio/analyze",
+        files={"audio": ("sample.wav", _make_wav(), "audio/wav")},
+    )
+    assert audio_response.status_code == 200, audio_response.text
+    assert audio_response.json()["analysis"]["duration_ms"] > 0
     print("FastAPI smoke test passed:", data["overall_score"])
+
+
+def _make_wav() -> bytes:
+    import io
+    import wave
+
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(16000)
+        wav_file.writeframes(b"\x00\x00" * 16000)
+    return buffer.getvalue()
 
 
 if __name__ == "__main__":

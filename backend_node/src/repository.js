@@ -101,6 +101,65 @@ export async function listCourses() {
   ];
 }
 
+export async function createCourse(payload) {
+  const course = {
+    id: crypto.randomUUID(),
+    title: payload.title,
+    description: payload.description || "",
+    levelCode: payload.levelCode || "beginner",
+    sortOrder: Number(payload.sortOrder || 0),
+    isPublished: payload.isPublished ?? true,
+  };
+
+  if (hasDatabase()) {
+    const result = await pool.query(
+      `
+        INSERT INTO course (id, title, description, level_code, sort_order, is_published)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, title, description, level_code, 0 AS lesson_count
+      `,
+      [course.id, course.title, course.description, course.levelCode, course.sortOrder, course.isPublished],
+    );
+    return mapCourse(result.rows[0]);
+  }
+
+  return { ...course, lessonCount: 0 };
+}
+
+export async function updateCourse(id, payload) {
+  if (!hasDatabase()) {
+    return {
+      id,
+      title: payload.title,
+      description: payload.description || "",
+      levelCode: payload.levelCode || "beginner",
+      lessonCount: 3,
+    };
+  }
+
+  const result = await pool.query(
+    `
+      UPDATE course
+      SET title = $2,
+          description = $3,
+          level_code = $4,
+          sort_order = $5,
+          is_published = $6
+      WHERE id = $1
+      RETURNING id, title, description, level_code, 0 AS lesson_count
+    `,
+    [
+      id,
+      payload.title,
+      payload.description || "",
+      payload.levelCode || "beginner",
+      Number(payload.sortOrder || 0),
+      payload.isPublished ?? true,
+    ],
+  );
+  return result.rows[0] ? mapCourse(result.rows[0]) : null;
+}
+
 export async function listLessons(courseId) {
   if (hasDatabase()) {
     const result = await pool.query(
@@ -135,6 +194,56 @@ export async function listLessons(courseId) {
       sortOrder: 3,
     },
   ];
+}
+
+export async function createLesson(payload) {
+  const lesson = {
+    id: crypto.randomUUID(),
+    courseId: payload.courseId,
+    title: payload.title,
+    description: payload.description || "",
+    sortOrder: Number(payload.sortOrder || 0),
+  };
+
+  if (hasDatabase()) {
+    const result = await pool.query(
+      `
+        INSERT INTO lesson (id, course_id, title, description, sort_order)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, course_id, title, description, sort_order
+      `,
+      [lesson.id, lesson.courseId, lesson.title, lesson.description, lesson.sortOrder],
+    );
+    return mapLesson(result.rows[0]);
+  }
+
+  return lesson;
+}
+
+export async function updateLesson(id, payload) {
+  if (!hasDatabase()) {
+    return {
+      id,
+      courseId: payload.courseId,
+      title: payload.title,
+      description: payload.description || "",
+      sortOrder: Number(payload.sortOrder || 0),
+    };
+  }
+
+  const result = await pool.query(
+    `
+      UPDATE lesson
+      SET course_id = $2,
+          title = $3,
+          description = $4,
+          sort_order = $5
+      WHERE id = $1
+      RETURNING id, course_id, title, description, sort_order
+    `,
+    [id, payload.courseId, payload.title, payload.description || "", Number(payload.sortOrder || 0)],
+  );
+  return result.rows[0] ? mapLesson(result.rows[0]) : null;
 }
 
 export async function listCorpusItems(filters = {}) {
@@ -347,6 +456,64 @@ export async function listPracticeScores(limit = 50) {
     fluencyScore: Number(row.fluency_score),
     toneScore: Number(row.tone_score),
   }));
+}
+
+export async function getPracticeScore(id) {
+  if (!hasDatabase()) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `
+      SELECT
+        pr.id AS practice_record_id,
+        pr.created_at,
+        aa.storage_path,
+        aa.mime_type,
+        aa.duration_ms,
+        ci.id AS corpus_item_id,
+        ci.hanzi,
+        ci.pinyin,
+        ci.item_type,
+        ps.model_version,
+        ps.overall_score,
+        ps.accuracy_score,
+        ps.fluency_score,
+        ps.tone_score,
+        ps.feedback
+      FROM practice_record pr
+      JOIN corpus_item ci ON ci.id = pr.corpus_item_id
+      LEFT JOIN audio_asset aa ON aa.id = pr.learner_audio_id
+      JOIN pronunciation_score ps ON ps.practice_record_id = pr.id
+      WHERE pr.id = $1
+    `,
+    [id],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    practiceRecordId: row.practice_record_id,
+    createdAt: row.created_at,
+    audio: {
+      storagePath: row.storage_path,
+      mimeType: row.mime_type,
+      durationMs: row.duration_ms,
+    },
+    corpusItem: {
+      id: row.corpus_item_id,
+      hanzi: row.hanzi,
+      pinyin: row.pinyin,
+      type: row.item_type,
+    },
+    score: {
+      modelVersion: row.model_version,
+      overallScore: Number(row.overall_score),
+      accuracyScore: Number(row.accuracy_score),
+      fluencyScore: Number(row.fluency_score),
+      toneScore: Number(row.tone_score),
+      feedback: row.feedback,
+    },
+  };
 }
 
 export async function savePracticeEvaluation({ practiceRecordId, corpusItemId, audio, score }) {
