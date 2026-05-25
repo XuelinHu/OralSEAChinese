@@ -1,0 +1,62 @@
+[
+  {
+    "id": "33333333-3333-3333-3333-333333333331",
+    "lessonId": "22222222-2222-2222-2222-222222222221",
+    "type": "pinyin",
+    "hanzi": "妈",
+    "pinyin": "mā",
+    "translationEn": "mother",
+    "difficulty": 1,
+    "tags": ["tone-1"]
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333332",
+    "lessonId": "22222222-2222-2222-2222-222222222221",
+    "type": "pinyin",
+    "hanzi": "马",
+    "pinyin": "mǎ",
+    "translationEn": "horse",
+    "difficulty": 1,
+    "tags": ["tone-3"]
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "lessonId": "22222222-2222-2222-2222-222222222222",
+    "type": "word",
+    "hanzi": "你好",
+    "pinyin": "nǐ hǎo",
+    "translationEn": "hello",
+    "difficulty": 1,
+    "tags": ["word", "greeting"]
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333334",
+    "lessonId": "22222222-2222-2222-2222-222222222222",
+    "type": "word",
+    "hanzi": "谢谢",
+    "pinyin": "xiè xie",
+    "translationEn": "thank you",
+    "difficulty": 1,
+    "tags": ["word", "daily"]
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333335",
+    "lessonId": "22222222-2222-2222-2222-222222222223",
+    "type": "sentence",
+    "hanzi": "我想学习中文。",
+    "pinyin": "wǒ xiǎng xué xí zhōng wén.",
+    "translationEn": "I want to learn Chinese.",
+    "difficulty": 2,
+    "tags": ["sentence", "learning"]
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333336",
+    "lessonId": "22222222-2222-2222-2222-222222222223",
+    "type": "sentence",
+    "hanzi": "今天的天气很好。",
+    "pinyin": "jīn tiān de tiān qì hěn hǎo.",
+    "translationEn": "The weather is good today.",
+    "difficulty": 2,
+    "tags": ["sentence", "daily"]
+  }
+]

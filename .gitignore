@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.venv/
+__pycache__/
+*.pyc
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+android/local.properties

@@ -1,0 +1,311 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #18212f;
+  background: #f3f6f8;
+  font-family: Inter, "Noto Sans SC", "Microsoft YaHei", Arial, sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #18212f;
+  cursor: pointer;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: #17202b;
+  color: #ffffff;
+  padding: 20px 16px;
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.brand strong,
+.brand span {
+  display: block;
+}
+
+.brand span {
+  color: #aeb9c6;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.sidebar nav {
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar button {
+  justify-content: flex-start;
+  text-align: left;
+  color: #dbe4ed;
+  background: transparent;
+  border-color: transparent;
+}
+
+.sidebar .nav-active {
+  background: #273544;
+  border-color: #3b4a5b;
+  color: #ffffff;
+}
+
+.workspace {
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.topbar h1,
+.topbar p,
+.panel-title h2,
+.scores-panel h2 {
+  margin: 0;
+}
+
+.topbar h1 {
+  font-size: 24px;
+}
+
+.topbar p {
+  color: #5b6878;
+  margin-top: 4px;
+}
+
+.icon-button {
+  width: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.toolbar span {
+  color: #5b6878;
+  font-size: 14px;
+}
+
+.seg-active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.editor-panel,
+.table-panel,
+.scores-panel {
+  background: #ffffff;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+}
+
+.editor-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.panel-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.panel-title h2,
+.scores-panel h2 {
+  font-size: 16px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #435164;
+  font-size: 14px;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  background: #ffffff;
+  color: #18212f;
+}
+
+.form-actions,
+.row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.primary {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+  color: #b42318;
+  border-color: #f0b8b2;
+}
+
+.table-panel {
+  overflow: hidden;
+}
+
+.table-scroll {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid #edf1f5;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: #5b6878;
+  font-size: 13px;
+  background: #f8fafc;
+}
+
+.type-pill {
+  display: inline-flex;
+  min-width: 44px;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+  background: #e7f0f9;
+}
+
+.type-pinyin {
+  color: #075985;
+  background: #e0f2fe;
+}
+
+.type-word {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.type-sentence {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.scores-panel {
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.scores-panel p {
+  color: #5b6878;
+}
+
+.score-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.score-item {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 80px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #edf1f5;
+  border-radius: 6px;
+}
+
+.score-item span {
+  color: #5b6878;
+}
+
+.score-item b {
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
