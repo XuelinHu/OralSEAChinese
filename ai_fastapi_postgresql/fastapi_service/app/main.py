@@ -1,9 +1,10 @@
 from uuid import uuid4
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile
 
 from .audio_utils import analyze_wav_duration
 from .evaluator import evaluate_pronunciation
+from .pronunciation_model import evaluate_audio_baseline
 from .schemas import EvaluateRequest, EvaluateResponse, TrainRequest
 
 app = FastAPI(title="OralSEAChinese AI Service", version="0.1.0")
@@ -31,6 +32,22 @@ async def analyze_audio(audio: UploadFile = File(...)) -> dict[str, object]:
     }
 
 
+@app.post("/api/v1/pronunciation/evaluate-audio", response_model=EvaluateResponse)
+async def evaluate_audio(
+    corpus_type: str = Form(...),
+    hanzi: str = Form(...),
+    pinyin: str = Form(...),
+    audio: UploadFile = File(...),
+) -> EvaluateResponse:
+    content = await audio.read()
+    return evaluate_audio_baseline(
+        audio_content=content,
+        corpus_type=corpus_type,  # type: ignore[arg-type]
+        hanzi=hanzi,
+        pinyin=pinyin,
+    )
+
+
 @app.get("/api/v1/model/versions")
 def model_versions() -> dict[str, list[dict[str, object]]]:
     return {
@@ -39,6 +56,12 @@ def model_versions() -> dict[str, list[dict[str, object]]]:
                 "version_code": "mock-v1",
                 "model_type": "pronunciation-evaluator",
                 "description": "规则占位版发音评分，用于跑通第一阶段业务闭环。",
+                "is_active": True,
+            },
+            {
+                "version_code": "baseline-v1",
+                "model_type": "pronunciation-evaluator",
+                "description": "基于真实 WAV 音频时长、能量、有效语音占比和停顿特征的本地发音评分基线模型。",
                 "is_active": True,
             }
         ]

@@ -26,7 +26,7 @@ def main() -> None:
     response = client.post("/api/v1/pronunciation/evaluate", json=payload)
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["model_version"] == "mock-v1"
+    assert data["model_version"] == "duration-rule-v1"
     assert data["overall_score"] > 0
     audio_response = client.post(
         "/api/v1/audio/analyze",
@@ -34,6 +34,17 @@ def main() -> None:
     )
     assert audio_response.status_code == 200, audio_response.text
     assert audio_response.json()["analysis"]["duration_ms"] > 0
+    model_response = client.post(
+        "/api/v1/pronunciation/evaluate-audio",
+        data={
+            "corpus_type": "sentence",
+            "hanzi": "我想学习中文。",
+            "pinyin": "wǒ xiǎng xué xí zhōng wén.",
+        },
+        files={"audio": ("sample.wav", _make_wav(), "audio/wav")},
+    )
+    assert model_response.status_code == 200, model_response.text
+    assert model_response.json()["model_version"] == "baseline-v1"
     print("FastAPI smoke test passed:", data["overall_score"])
 
 

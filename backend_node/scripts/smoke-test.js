@@ -100,7 +100,7 @@ async function main() {
     const form = new FormData();
     form.append("corpusItemId", corpus.items[0].id);
     form.append("durationMs", "2800");
-    form.append("audio", new Blob(["fake-audio"]), "practice.wav");
+    form.append("audio", new Blob([makeWavBuffer()], { type: "audio/wav" }), "practice.wav");
 
     const evaluated = await fetch(`${baseUrl}/api/v1/practice/evaluate`, {
       method: "POST",
@@ -152,6 +152,34 @@ async function main() {
     server.close();
     ai.kill("SIGTERM");
   }
+}
+
+function makeWavBuffer() {
+  const sampleRate = 16000;
+  const durationSeconds = 2;
+  const sampleCount = sampleRate * durationSeconds;
+  const dataSize = sampleCount * 2;
+  const buffer = Buffer.alloc(44 + dataSize);
+
+  buffer.write("RIFF", 0);
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write("WAVE", 8);
+  buffer.write("fmt ", 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write("data", 36);
+  buffer.writeUInt32LE(dataSize, 40);
+
+  for (let i = 0; i < sampleCount; i += 1) {
+    const sample = Math.round(Math.sin((2 * Math.PI * 220 * i) / sampleRate) * 8000);
+    buffer.writeInt16LE(sample, 44 + i * 2);
+  }
+  return buffer;
 }
 
 main().catch((error) => {

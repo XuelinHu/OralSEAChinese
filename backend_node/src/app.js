@@ -6,7 +6,7 @@ import cors from "cors";
 import express from "express";
 import multer from "multer";
 
-import { evaluatePronunciation } from "./aiClient.js";
+import { evaluatePronunciationAudio } from "./aiClient.js";
 import {
   healthCheckDatabase,
   createCourse,
@@ -354,7 +354,7 @@ export function createApp() {
 
       const practiceRecordId = crypto.randomUUID();
       const audioSize = req.file?.size || 0;
-      const result = await evaluatePronunciation({
+      const result = await evaluatePronunciationAudio({
         practice_record_id: practiceRecordId,
         corpus_item_id: corpusItem.id,
         corpus_type: corpusItem.type,
@@ -362,7 +362,7 @@ export function createApp() {
         pinyin: corpusItem.pinyin,
         audio_url: audioSize > 0 ? `/uploads/${req.file.filename}` : null,
         duration_ms: Number(req.body.durationMs || 0) || null,
-      });
+      }, req.file?.path);
       const audio = {
         received: audioSize > 0,
         size: audioSize,

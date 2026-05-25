@@ -27,8 +27,8 @@ def evaluate_pronunciation(payload: EvaluateRequest) -> EvaluateResponse:
     overall_score = round(accuracy_score * 0.45 + fluency_score * 0.25 + tone_score * 0.30, 2)
 
     feedback = [
-        FeedbackSegment(label="发音完整度", message="已收到完整练习音频，第一版使用规则评分占位。"),
-        FeedbackSegment(label="声调", message="后续将接入声调识别模型，当前返回基础声调评分。"),
+        FeedbackSegment(label="发音完整度", message="未收到音频文件，已使用文本和时长规则评分。"),
+        FeedbackSegment(label="声调", message="建议通过音频上传接口使用 baseline-v1 获取真实音频特征评分。"),
     ]
     if payload.corpus_type == "sentence":
         feedback.append(
@@ -36,7 +36,7 @@ def evaluate_pronunciation(payload: EvaluateRequest) -> EvaluateResponse:
         )
 
     return EvaluateResponse(
-        model_version="mock-v1",
+        model_version="duration-rule-v1",
         overall_score=overall_score,
         accuracy_score=accuracy_score,
         fluency_score=fluency_score,
