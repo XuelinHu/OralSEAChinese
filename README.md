@@ -26,3 +26,14 @@ OralSEAChinese/
 ## 配置安全
 
 数据库账号、密码、服务地址等敏感信息不要提交到代码仓库。后续统一使用 `.env` 或服务器环境变量管理。
+
+## 本地 PostgreSQL
+
+项目提供 `docker-compose.yml`，可启动本地 PostgreSQL：
+
+```bash
+docker compose up -d postgres
+cd backend_node
+cp .env.example .env
+npm run db:init
+```

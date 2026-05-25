@@ -22,11 +22,11 @@ class ApiClient {
     return items.map((item) => CorpusItem.fromJson(item as Map<String, dynamic>)).toList();
   }
 
-  Future<PronunciationScore> submitPractice(CorpusItem item) async {
+  Future<PronunciationScore> submitPractice(CorpusItem item, {required String audioPath, int? durationMs}) async {
     final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/v1/practice/evaluate'));
     request.fields['corpusItemId'] = item.id;
-    request.fields['durationMs'] = item.type == 'sentence' ? '2800' : '1600';
-    request.files.add(http.MultipartFile.fromString('audio', 'placeholder-audio', filename: 'practice.wav'));
+    request.fields['durationMs'] = '${durationMs ?? (item.type == 'sentence' ? 2800 : 1600)}';
+    request.files.add(await http.MultipartFile.fromPath('audio', audioPath));
 
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);

@@ -38,6 +38,12 @@ http://127.0.0.1:3100
 
 ## PostgreSQL 初始化
 
+本项目已提供本地 PostgreSQL：
+
+```bash
+docker compose up -d postgres
+```
+
 推荐通过 Node 初始化脚本执行所有数据库脚本：
 
 ```bash
@@ -76,6 +82,8 @@ JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 flutter build apk --debug
 ```
 
 Android 模拟器访问本机 Node 后端时，APK 默认使用 `http://10.0.2.2:3100`。
+
+APK 已接入真实录音，Android 侧需要麦克风权限。Debug APK 构建命令：
 
 如果本机全局 Gradle 初始化文件注入了仓库配置，导致 Android 构建出现 repository mode 冲突，可使用临时 Gradle 目录隔离：
 

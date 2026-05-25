@@ -208,9 +208,31 @@
 - 上传真实录音文件到 Node 后端。
 - 用真实评分结果刷新练习页面。
 
+当前进度：
+
+- 已接入 `record`、`path_provider`、`permission_handler`。
+- 已新增 Android 麦克风权限。
+- APK 已支持开始录音、停止录音并上传真实 WAV 文件。
+- 已通过 `flutter analyze`、`flutter test` 和 Debug APK 构建。
+
 ### 6.4 PostgreSQL 实库验证
 
 - 配置真实 `DATABASE_URL`。
 - 执行 `npm run db:init`。
 - 验证课程、课时、语料接口读取 PostgreSQL。
 - 验证练习评分写入 `practice_record` 和 `pronunciation_score`。
+
+当前进度：
+
+- 已提供 `docker-compose.yml` 本地 PostgreSQL 编排。
+- 已提供 `npm run db:init` 初始化脚本。
+- 当前机器 Docker socket 无访问权限，无法在本会话启动 PostgreSQL 容器；在有 Docker 权限的环境可直接执行。
+
+### 6.5 文件存储与 AI 评分升级
+
+当前进度：
+
+- Node 后端已将上传音频落盘到 `backend_node/uploads/`。
+- Node 后端已通过 `/uploads/...` 提供本地音频访问。
+- FastAPI 已增加 `/api/v1/audio/analyze`，可分析 WAV 时长、采样率和声道数。
+- 当前评分仍为 `mock-v1` 规则评分，后续可在该接口基础上替换真实 ASR、声调识别和音素对齐模型。

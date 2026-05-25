@@ -136,7 +136,7 @@ button:disabled {
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 320px) minmax(280px, 360px) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -189,6 +189,17 @@ select {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.inline-form {
+  display: grid;
+  gap: 10px;
+}
+
+.lesson-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .primary {

@@ -10,6 +10,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const corpusPath = path.join(__dirname, "data", "corpus.json");
 const corpus = JSON.parse(fs.readFileSync(corpusPath, "utf8"));
+const courses = [
+  {
+    id: "11111111-1111-1111-1111-111111111111",
+    title: "中文发音入门",
+    description: "面向马来西亚学习者的拼音、词语和句子发音练习。",
+    levelCode: "beginner",
+    sortOrder: 1,
+    isPublished: true,
+    lessonCount: 3,
+  },
+];
+const lessons = [
+  {
+    id: "22222222-2222-2222-2222-222222222221",
+    courseId: "11111111-1111-1111-1111-111111111111",
+    title: "声调基础",
+    description: "练习普通话四声与轻声。",
+    sortOrder: 1,
+  },
+  {
+    id: "22222222-2222-2222-2222-222222222222",
+    courseId: "11111111-1111-1111-1111-111111111111",
+    title: "常用词语",
+    description: "练习日常交流高频词语。",
+    sortOrder: 2,
+  },
+  {
+    id: "22222222-2222-2222-2222-222222222223",
+    courseId: "11111111-1111-1111-1111-111111111111",
+    title: "日常句子",
+    description: "练习完整句子的连读、停顿和语调。",
+    sortOrder: 3,
+  },
+];
 
 const pool = config.databaseUrl ? new Pool({ connectionString: config.databaseUrl }) : null;
 const demoUserId = "00000000-0000-0000-0000-000000000001";
@@ -90,15 +124,10 @@ export async function listCourses() {
     return result.rows.map(mapCourse);
   }
 
-  return [
-    {
-      id: "11111111-1111-1111-1111-111111111111",
-      title: "中文发音入门",
-      description: "面向马来西亚学习者的拼音、词语和句子发音练习。",
-      levelCode: "beginner",
-      lessonCount: 3,
-    },
-  ];
+  return courses.map((course) => ({
+    ...course,
+    lessonCount: lessons.filter((lesson) => lesson.courseId === course.id).length,
+  }));
 }
 
 export async function createCourse(payload) {
@@ -123,17 +152,25 @@ export async function createCourse(payload) {
     return mapCourse(result.rows[0]);
   }
 
+  courses.push({ ...course, lessonCount: 0 });
   return { ...course, lessonCount: 0 };
 }
 
 export async function updateCourse(id, payload) {
   if (!hasDatabase()) {
-    return {
-      id,
+    const index = courses.findIndex((course) => course.id === id);
+    if (index < 0) return null;
+    courses[index] = {
+      ...courses[index],
       title: payload.title,
       description: payload.description || "",
       levelCode: payload.levelCode || "beginner",
-      lessonCount: 3,
+      sortOrder: Number(payload.sortOrder || 0),
+      isPublished: payload.isPublished ?? true,
+    };
+    return {
+      ...courses[index],
+      lessonCount: lessons.filter((lesson) => lesson.courseId === id).length,
     };
   }
 
@@ -174,26 +211,9 @@ export async function listLessons(courseId) {
     return result.rows.map(mapLesson);
   }
 
-  return [
-    {
-      id: "22222222-2222-2222-2222-222222222221",
-      courseId,
-      title: "声调基础",
-      sortOrder: 1,
-    },
-    {
-      id: "22222222-2222-2222-2222-222222222222",
-      courseId,
-      title: "常用词语",
-      sortOrder: 2,
-    },
-    {
-      id: "22222222-2222-2222-2222-222222222223",
-      courseId,
-      title: "日常句子",
-      sortOrder: 3,
-    },
-  ];
+  return lessons
+    .filter((lesson) => lesson.courseId === courseId)
+    .sort((first, second) => first.sortOrder - second.sortOrder);
 }
 
 export async function createLesson(payload) {
@@ -217,18 +237,22 @@ export async function createLesson(payload) {
     return mapLesson(result.rows[0]);
   }
 
+  lessons.push(lesson);
   return lesson;
 }
 
 export async function updateLesson(id, payload) {
   if (!hasDatabase()) {
-    return {
-      id,
+    const index = lessons.findIndex((lesson) => lesson.id === id);
+    if (index < 0) return null;
+    lessons[index] = {
+      ...lessons[index],
       courseId: payload.courseId,
       title: payload.title,
       description: payload.description || "",
       sortOrder: Number(payload.sortOrder || 0),
     };
+    return lessons[index];
   }
 
   const result = await pool.query(

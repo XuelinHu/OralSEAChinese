@@ -24,6 +24,36 @@ async function main() {
     const health = await fetch(`${baseUrl}/health`);
     if (!health.ok) throw new Error(`health failed: ${health.status}`);
 
+    const createdCourse = await fetch(`${baseUrl}/api/v1/admin/courses`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "冒烟测试课程",
+        description: "管理后台接口测试课程",
+        levelCode: "beginner",
+        sortOrder: 99,
+        isPublished: true,
+      }),
+    });
+    if (!createdCourse.ok) {
+      throw new Error(`admin course create failed: ${createdCourse.status} ${await createdCourse.text()}`);
+    }
+    const courseId = (await createdCourse.json()).item.id;
+
+    const createdLesson = await fetch(`${baseUrl}/api/v1/admin/lessons`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        courseId,
+        title: "冒烟测试课时",
+        description: "管理后台接口测试课时",
+        sortOrder: 1,
+      }),
+    });
+    if (!createdLesson.ok) {
+      throw new Error(`admin lesson create failed: ${createdLesson.status} ${await createdLesson.text()}`);
+    }
+
     const corpus = await fetch(`${baseUrl}/api/v1/corpus?type=sentence`).then((res) => res.json());
     if (!corpus.items?.length) throw new Error("sentence corpus is empty");
 

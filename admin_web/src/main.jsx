@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Database, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
+import { BookOpen, Database, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
 import './styles.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3100';
@@ -11,13 +11,32 @@ const emptyForm = {
   translationEn: '',
   difficulty: 1,
   tags: '',
+  lessonId: '',
+};
+
+const emptyCourseForm = {
+  title: '',
+  description: '',
+  levelCode: 'beginner',
+  sortOrder: 1,
+};
+
+const emptyLessonForm = {
+  title: '',
+  description: '',
+  sortOrder: 1,
 };
 
 function App() {
   const [type, setType] = useState('all');
   const [items, setItems] = useState([]);
   const [scores, setScores] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [lessons, setLessons] = useState([]);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
   const [form, setForm] = useState(emptyForm);
+  const [courseForm, setCourseForm] = useState(emptyCourseForm);
+  const [lessonForm, setLessonForm] = useState(emptyLessonForm);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('等待加载');
@@ -28,16 +47,25 @@ function App() {
     setLoading(true);
     try {
       const query = nextType === 'all' ? '' : `?type=${nextType}`;
-      const [corpusRes, scoresRes] = await Promise.all([
+      const [corpusRes, scoresRes, coursesRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/v1/admin/corpus${query}`),
         fetch(`${API_BASE_URL}/api/v1/admin/practice-scores?limit=20`),
+        fetch(`${API_BASE_URL}/api/v1/admin/courses`),
       ]);
       if (!corpusRes.ok) throw new Error(`语料加载失败：${corpusRes.status}`);
       if (!scoresRes.ok) throw new Error(`评分加载失败：${scoresRes.status}`);
+      if (!coursesRes.ok) throw new Error(`课程加载失败：${coursesRes.status}`);
       const corpusData = await corpusRes.json();
       const scoreData = await scoresRes.json();
+      const courseData = await coursesRes.json();
       setItems(corpusData.items || []);
       setScores(scoreData.items || []);
+      setCourses(courseData.items || []);
+      const courseId = selectedCourseId || courseData.items?.[0]?.id || '';
+      if (courseId) {
+        setSelectedCourseId(courseId);
+        await loadLessons(courseId);
+      }
       setStatus(`已加载 ${corpusData.items?.length || 0} 条语料`);
     } catch (error) {
       setStatus(error.message);
@@ -46,12 +74,27 @@ function App() {
     }
   }
 
+  async function loadLessons(courseId) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/courses/${courseId}/lessons`);
+    if (!response.ok) throw new Error(`课时加载失败：${response.status}`);
+    const data = await response.json();
+    setLessons(data.items || []);
+  }
+
   useEffect(() => {
     loadData('all');
   }, []);
 
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateCourseForm(field, value) {
+    setCourseForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateLessonForm(field, value) {
+    setLessonForm((current) => ({ ...current, [field]: value }));
   }
 
   function startEdit(item) {
@@ -63,6 +106,7 @@ function App() {
       translationEn: item.translationEn || '',
       difficulty: item.difficulty || 1,
       tags: (item.tags || []).join(', '),
+      lessonId: item.lessonId || '',
     });
   }
 
@@ -95,6 +139,54 @@ function App() {
       resetForm();
       await loadData(type);
       setStatus(editingId ? '语料已更新' : '语料已新增');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitCourse(event) {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/courses`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...courseForm, sortOrder: Number(courseForm.sortOrder), isPublished: true }),
+      });
+      if (!response.ok) throw new Error(`课程保存失败：${response.status}`);
+      setCourseForm(emptyCourseForm);
+      await loadData(type);
+      setStatus('课程已新增');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitLesson(event) {
+    event.preventDefault();
+    if (!selectedCourseId) {
+      setStatus('请先选择课程');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/lessons`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...lessonForm,
+          courseId: selectedCourseId,
+          sortOrder: Number(lessonForm.sortOrder),
+        }),
+      });
+      if (!response.ok) throw new Error(`课时保存失败：${response.status}`);
+      setLessonForm(emptyLessonForm);
+      await loadLessons(selectedCourseId);
+      setStatus('课时已新增');
     } catch (error) {
       setStatus(error.message);
     } finally {
@@ -135,6 +227,7 @@ function App() {
         </div>
         <nav>
           <button className="nav-active">语料库</button>
+          <button>课程课时</button>
           <button>评分记录</button>
           <button>模型任务</button>
         </nav>
@@ -166,11 +259,70 @@ function App() {
         </section>
 
         <section className="content-grid">
+          <section className="editor-panel">
+            <div className="panel-title">
+              <BookOpen size={18} />
+              <h2>课程课时</h2>
+            </div>
+            <form className="inline-form" onSubmit={submitCourse}>
+              <label>
+                课程名称
+                <input value={courseForm.title} onChange={(event) => updateCourseForm('title', event.target.value)} required />
+              </label>
+              <label>
+                说明
+                <input value={courseForm.description} onChange={(event) => updateCourseForm('description', event.target.value)} />
+              </label>
+              <button className="primary" type="submit" disabled={loading}>新增课程</button>
+            </form>
+            <label>
+              当前课程
+              <select
+                value={selectedCourseId}
+                onChange={async (event) => {
+                  setSelectedCourseId(event.target.value);
+                  await loadLessons(event.target.value);
+                }}
+              >
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>{course.title}</option>
+                ))}
+              </select>
+            </label>
+            <form className="inline-form" onSubmit={submitLesson}>
+              <label>
+                课时名称
+                <input value={lessonForm.title} onChange={(event) => updateLessonForm('title', event.target.value)} required />
+              </label>
+              <label>
+                说明
+                <input value={lessonForm.description} onChange={(event) => updateLessonForm('description', event.target.value)} />
+              </label>
+              <button className="primary" type="submit" disabled={loading}>新增课时</button>
+            </form>
+            <div className="lesson-list">
+              {lessons.map((lesson) => (
+                <button key={lesson.id} type="button" onClick={() => updateForm('lessonId', lesson.id)}>
+                  {lesson.title}
+                </button>
+              ))}
+            </div>
+          </section>
+
           <form className="editor-panel" onSubmit={submitForm}>
             <div className="panel-title">
               <Plus size={18} />
               <h2>{editingId ? '编辑语料' : '新增语料'}</h2>
             </div>
+            <label>
+              归属课时
+              <select value={form.lessonId} onChange={(event) => updateForm('lessonId', event.target.value)}>
+                <option value="">不指定</option>
+                {lessons.map((lesson) => (
+                  <option key={lesson.id} value={lesson.id}>{lesson.title}</option>
+                ))}
+              </select>
+            </label>
             <label>
               类型
               <select value={form.type} onChange={(event) => updateForm('type', event.target.value)}>

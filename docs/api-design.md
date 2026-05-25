@@ -16,7 +16,14 @@
 | POST | `/api/v1/admin/corpus` | 管理端新增语料 |
 | PUT | `/api/v1/admin/corpus/:id` | 管理端编辑语料 |
 | DELETE | `/api/v1/admin/corpus/:id` | 管理端删除语料 |
+| GET | `/api/v1/admin/courses` | 管理端课程列表 |
+| POST | `/api/v1/admin/courses` | 管理端新增课程 |
+| PUT | `/api/v1/admin/courses/:id` | 管理端编辑课程 |
+| GET | `/api/v1/admin/courses/:courseId/lessons` | 管理端课时列表 |
+| POST | `/api/v1/admin/lessons` | 管理端新增课时 |
+| PUT | `/api/v1/admin/lessons/:id` | 管理端编辑课时 |
 | GET | `/api/v1/admin/practice-scores` | 管理端评分记录列表 |
+| GET | `/api/v1/admin/practice-scores/:id` | 管理端评分记录详情 |
 
 `/api/v1/practice/evaluate` 在配置 PostgreSQL 后会保存练习记录和评分结果；无数据库时只返回评分结果和 `persistence.persisted=false`。
 
@@ -30,3 +37,4 @@
 | POST | `/api/v1/pronunciation/evaluate` | 发音评测 |
 | GET | `/api/v1/model/versions` | 模型版本列表 |
 | POST | `/api/v1/model/train` | 创建模型训练任务 |
+| POST | `/api/v1/audio/analyze` | 分析上传 WAV 音频的时长、采样率和声道数 |
