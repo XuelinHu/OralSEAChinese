@@ -10,17 +10,21 @@ import { evaluatePronunciation } from "./aiClient.js";
 import {
   healthCheckDatabase,
   createCourse,
+  createAnnotation,
   createCorpusItem,
   createLesson,
   deleteCorpusItem,
+  deleteAnnotation,
   getPracticeScore,
   getCorpusItem,
   listCorpusItems,
   listCourses,
+  listAnnotations,
   listLessons,
   listPracticeScores,
   savePracticeEvaluation,
   updateCourse,
+  updateAnnotation,
   updateCorpusItem,
   updateLesson,
 } from "./repository.js";
@@ -260,6 +264,62 @@ export function createApp() {
     }
   });
 
+  app.get("/api/v1/admin/annotations", async (req, res, next) => {
+    try {
+      res.json({
+        items: await listAnnotations({
+          practiceRecordId: req.query.practiceRecordId,
+        }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/v1/admin/annotations", async (req, res, next) => {
+    try {
+      const validationError = validateAnnotationPayload(req.body);
+      if (validationError) {
+        res.status(400).json({ error: validationError });
+        return;
+      }
+      res.status(201).json({ item: await createAnnotation(req.body) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/v1/admin/annotations/:id", async (req, res, next) => {
+    try {
+      const validationError = validateAnnotationPayload(req.body, { requirePracticeRecordId: false });
+      if (validationError) {
+        res.status(400).json({ error: validationError });
+        return;
+      }
+      const item = await updateAnnotation(req.params.id, req.body);
+      if (!item) {
+        res.status(404).json({ error: "Annotation not found" });
+        return;
+      }
+      res.json({ item });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/v1/admin/annotations/:id", async (req, res, next) => {
+    try {
+      const deleted = await deleteAnnotation(req.params.id);
+      if (!deleted) {
+        res.status(404).json({ error: "Annotation not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/v1/practice/evaluate", upload.single("audio"), async (req, res, next) => {
     try {
       const corpusItem = await getCorpusItem(req.body.corpusItemId);
@@ -344,6 +404,17 @@ function validateCorpusPayload(payload) {
   const difficulty = Number(payload.difficulty || 1);
   if (!Number.isInteger(difficulty) || difficulty < 1 || difficulty > 5) {
     return "difficulty must be an integer between 1 and 5";
+  }
+  return null;
+}
+
+function validateAnnotationPayload(payload, options = { requirePracticeRecordId: true }) {
+  if (options.requirePracticeRecordId && (!payload.practiceRecordId || typeof payload.practiceRecordId !== "string")) {
+    return "practiceRecordId is required";
+  }
+  const allowedTypes = new Set(["initial", "final", "tone", "fluency", "pronunciation", "other"]);
+  if (!allowedTypes.has(payload.errorType)) {
+    return "errorType must be one of initial, final, tone, fluency, pronunciation, other";
   }
   return null;
 }

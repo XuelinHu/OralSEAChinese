@@ -36,3 +36,16 @@ Node 后端优先使用 `DATABASE_URL` 连接 PostgreSQL。未配置数据库时
 - 课程接口读取 `course` 和 `lesson`。
 - 语料接口读取 `corpus_item`。
 - 练习提交会写入 `audio_asset`、`practice_record` 和 `pronunciation_score`。
+
+## 人工标注
+
+`corpus_annotation` 用于沉淀后续模型训练数据。第一版支持：
+
+- 声母错误：`initial`
+- 韵母错误：`final`
+- 声调错误：`tone`
+- 流利度问题：`fluency`
+- 整体发音问题：`pronunciation`
+- 其他问题：`other`
+
+标注可关联练习记录，并记录起止毫秒和教师/研究人员备注。

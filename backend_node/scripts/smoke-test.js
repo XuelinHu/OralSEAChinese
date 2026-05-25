@@ -5,8 +5,9 @@ import { createApp } from "../src/app.js";
 
 async function main() {
   process.env.AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://127.0.0.1:8001";
+  const pythonBin = process.env.PYTHON_BIN || "/home/xuelin/miniconda3/envs/rc-llm-eval/bin/python";
 
-  const ai = spawn("python", ["-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8001"], {
+  const ai = spawn(pythonBin, ["-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8001"], {
     cwd: "../ai_fastapi_postgresql/fastapi_service",
     stdio: "pipe",
   });
@@ -111,6 +112,27 @@ async function main() {
     const result = await evaluated.json();
     if (!result.score?.overall_score) {
       throw new Error("missing pronunciation score");
+    }
+    if (result.persistence?.persisted) {
+      const detailResponse = await fetch(`${baseUrl}/api/v1/admin/practice-scores/${result.practiceRecordId}`);
+      if (!detailResponse.ok) {
+        throw new Error(`score detail failed: ${detailResponse.status} ${await detailResponse.text()}`);
+      }
+
+      const annotationResponse = await fetch(`${baseUrl}/api/v1/admin/annotations`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          practiceRecordId: result.practiceRecordId,
+          errorType: "tone",
+          note: "三声需要更完整",
+          startMs: 0,
+          endMs: 900,
+        }),
+      });
+      if (!annotationResponse.ok) {
+        throw new Error(`annotation create failed: ${annotationResponse.status} ${await annotationResponse.text()}`);
+      }
     }
     console.log("Node smoke test passed:", result.score.overall_score);
   } finally {

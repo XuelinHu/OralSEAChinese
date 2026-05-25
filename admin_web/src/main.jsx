@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BookOpen, Database, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
+import { BookOpen, Database, Headphones, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
 import './styles.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3100';
@@ -27,6 +27,13 @@ const emptyLessonForm = {
   sortOrder: 1,
 };
 
+const emptyAnnotationForm = {
+  errorType: 'tone',
+  note: '',
+  startMs: '',
+  endMs: '',
+};
+
 function App() {
   const [type, setType] = useState('all');
   const [items, setItems] = useState([]);
@@ -37,6 +44,8 @@ function App() {
   const [form, setForm] = useState(emptyForm);
   const [courseForm, setCourseForm] = useState(emptyCourseForm);
   const [lessonForm, setLessonForm] = useState(emptyLessonForm);
+  const [selectedScore, setSelectedScore] = useState(null);
+  const [annotationForm, setAnnotationForm] = useState(emptyAnnotationForm);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('等待加载');
@@ -95,6 +104,10 @@ function App() {
 
   function updateLessonForm(field, value) {
     setLessonForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateAnnotationForm(field, value) {
+    setAnnotationForm((current) => ({ ...current, [field]: value }));
   }
 
   function startEdit(item) {
@@ -203,6 +216,60 @@ function App() {
       if (!response.ok) throw new Error(`删除失败：${response.status}`);
       await loadData(type);
       setStatus('语料已删除');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function openScoreDetail(score) {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/practice-scores/${score.practiceRecordId}`);
+      if (!response.ok) throw new Error(`评分详情加载失败：${response.status}`);
+      const data = await response.json();
+      setSelectedScore(data.item);
+      setAnnotationForm(emptyAnnotationForm);
+      setStatus('评分详情已加载');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitAnnotation(event) {
+    event.preventDefault();
+    if (!selectedScore) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/annotations`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...annotationForm,
+          practiceRecordId: selectedScore.practiceRecordId,
+        }),
+      });
+      if (!response.ok) throw new Error(`标注保存失败：${response.status}`);
+      await openScoreDetail({ practiceRecordId: selectedScore.practiceRecordId });
+      setStatus('标注已保存');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteAnnotation(annotationId) {
+    if (!selectedScore) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/annotations/${annotationId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(`标注删除失败：${response.status}`);
+      await openScoreDetail({ practiceRecordId: selectedScore.practiceRecordId });
+      setStatus('标注已删除');
     } catch (error) {
       setStatus(error.message);
     } finally {
@@ -408,15 +475,83 @@ function App() {
           ) : (
             <div className="score-list">
               {scores.map((score) => (
-                <div key={score.practiceRecordId} className="score-item">
+                <button key={score.practiceRecordId} className="score-item" onClick={() => openScoreDetail(score)}>
                   <strong>{score.hanzi}</strong>
                   <span>{score.pinyin}</span>
                   <b>{score.overallScore.toFixed(1)}</b>
-                </div>
+                </button>
               ))}
             </div>
           )}
         </section>
+
+        {selectedScore && (
+          <section className="detail-panel">
+            <div className="panel-title">
+              <Headphones size={18} />
+              <h2>练习详情与人工标注</h2>
+            </div>
+            <div className="detail-grid">
+              <div>
+                <h3>{selectedScore.corpusItem.hanzi}</h3>
+                <p>{selectedScore.corpusItem.pinyin}</p>
+                <p>类型：{typeLabel(selectedScore.corpusItem.type)}</p>
+                <p>时间：{new Date(selectedScore.createdAt).toLocaleString()}</p>
+                {selectedScore.audio?.storagePath ? (
+                  <audio controls src={`${API_BASE_URL}${selectedScore.audio.storagePath}`} />
+                ) : (
+                  <p>暂无录音文件</p>
+                )}
+              </div>
+              <div className="score-metrics">
+                <span>总分 <b>{selectedScore.score.overallScore.toFixed(1)}</b></span>
+                <span>准确度 <b>{selectedScore.score.accuracyScore.toFixed(1)}</b></span>
+                <span>流利度 <b>{selectedScore.score.fluencyScore.toFixed(1)}</b></span>
+                <span>声调 <b>{selectedScore.score.toneScore.toFixed(1)}</b></span>
+              </div>
+            </div>
+
+            <form className="annotation-form" onSubmit={submitAnnotation}>
+              <label>
+                错误类型
+                <select value={annotationForm.errorType} onChange={(event) => updateAnnotationForm('errorType', event.target.value)}>
+                  <option value="initial">声母错误</option>
+                  <option value="final">韵母错误</option>
+                  <option value="tone">声调错误</option>
+                  <option value="fluency">流利度问题</option>
+                  <option value="pronunciation">整体发音问题</option>
+                  <option value="other">其他</option>
+                </select>
+              </label>
+              <label>
+                开始毫秒
+                <input type="number" value={annotationForm.startMs} onChange={(event) => updateAnnotationForm('startMs', event.target.value)} />
+              </label>
+              <label>
+                结束毫秒
+                <input type="number" value={annotationForm.endMs} onChange={(event) => updateAnnotationForm('endMs', event.target.value)} />
+              </label>
+              <label>
+                备注
+                <input value={annotationForm.note} onChange={(event) => updateAnnotationForm('note', event.target.value)} />
+              </label>
+              <button className="primary" type="submit" disabled={loading}>保存标注</button>
+            </form>
+
+            <div className="annotation-list">
+              {(selectedScore.annotations || []).map((annotation) => (
+                <div key={annotation.id} className="annotation-item">
+                  <strong>{errorTypeLabel(annotation.errorType)}</strong>
+                  <span>{annotation.startMs ?? '-'}ms - {annotation.endMs ?? '-'}ms</span>
+                  <p>{annotation.note || '无备注'}</p>
+                  <button className="danger" onClick={() => deleteAnnotation(annotation.id)} title="删除标注">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </section>
     </main>
   );
@@ -428,6 +563,17 @@ function typeLabel(value) {
     pinyin: '拼音',
     word: '词语',
     sentence: '句子',
+  }[value] || value;
+}
+
+function errorTypeLabel(value) {
+  return {
+    initial: '声母错误',
+    final: '韵母错误',
+    tone: '声调错误',
+    fluency: '流利度问题',
+    pronunciation: '整体发音问题',
+    other: '其他',
   }[value] || value;
 }
 

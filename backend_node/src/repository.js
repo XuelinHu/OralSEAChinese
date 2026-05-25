@@ -44,6 +44,7 @@ const lessons = [
     sortOrder: 3,
   },
 ];
+const annotations = [];
 
 const pool = config.databaseUrl ? new Pool({ connectionString: config.databaseUrl }) : null;
 const demoUserId = "00000000-0000-0000-0000-000000000001";
@@ -96,6 +97,19 @@ function normalizeTags(tags) {
       .filter(Boolean);
   }
   return [];
+}
+
+function mapAnnotation(row) {
+  return {
+    id: row.id,
+    practiceRecordId: row.practice_record_id,
+    annotatorUserId: row.annotator_user_id,
+    errorType: row.error_type,
+    note: row.note || "",
+    startMs: row.start_ms,
+    endMs: row.end_ms,
+    createdAt: row.created_at,
+  };
 }
 
 export async function healthCheckDatabase() {
@@ -515,6 +529,16 @@ export async function getPracticeScore(id) {
   );
   const row = result.rows[0];
   if (!row) return null;
+  const annotationResult = await pool.query(
+    `
+      SELECT id, practice_record_id, annotator_user_id, error_type, note, start_ms, end_ms, created_at
+      FROM corpus_annotation
+      WHERE practice_record_id = $1
+      ORDER BY created_at DESC
+    `,
+    [id],
+  );
+
   return {
     practiceRecordId: row.practice_record_id,
     createdAt: row.created_at,
@@ -537,7 +561,128 @@ export async function getPracticeScore(id) {
       toneScore: Number(row.tone_score),
       feedback: row.feedback,
     },
+    annotations: annotationResult.rows.map(mapAnnotation),
   };
+}
+
+export async function listAnnotations(filters = {}) {
+  if (!hasDatabase()) {
+    return annotations.filter((annotation) => {
+      if (filters.practiceRecordId && annotation.practiceRecordId !== filters.practiceRecordId) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  const values = [];
+  const conditions = [];
+  if (filters.practiceRecordId) {
+    values.push(filters.practiceRecordId);
+    conditions.push(`practice_record_id = $${values.length}`);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const result = await pool.query(
+    `
+      SELECT id, practice_record_id, annotator_user_id, error_type, note, start_ms, end_ms, created_at
+      FROM corpus_annotation
+      ${where}
+      ORDER BY created_at DESC
+    `,
+    values,
+  );
+  return result.rows.map(mapAnnotation);
+}
+
+export async function createAnnotation(payload) {
+  const annotation = {
+    id: crypto.randomUUID(),
+    practiceRecordId: payload.practiceRecordId,
+    annotatorUserId: demoUserId,
+    errorType: payload.errorType,
+    note: payload.note || "",
+    startMs: payload.startMs === undefined || payload.startMs === "" ? null : Number(payload.startMs),
+    endMs: payload.endMs === undefined || payload.endMs === "" ? null : Number(payload.endMs),
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!hasDatabase()) {
+    annotations.unshift(annotation);
+    return annotation;
+  }
+
+  const result = await pool.query(
+    `
+      INSERT INTO corpus_annotation (
+        id,
+        practice_record_id,
+        annotator_user_id,
+        error_type,
+        note,
+        start_ms,
+        end_ms
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, practice_record_id, annotator_user_id, error_type, note, start_ms, end_ms, created_at
+    `,
+    [
+      annotation.id,
+      annotation.practiceRecordId,
+      annotation.annotatorUserId,
+      annotation.errorType,
+      annotation.note,
+      annotation.startMs,
+      annotation.endMs,
+    ],
+  );
+  return mapAnnotation(result.rows[0]);
+}
+
+export async function updateAnnotation(id, payload) {
+  if (!hasDatabase()) {
+    const index = annotations.findIndex((annotation) => annotation.id === id);
+    if (index < 0) return null;
+    annotations[index] = {
+      ...annotations[index],
+      errorType: payload.errorType,
+      note: payload.note || "",
+      startMs: payload.startMs === undefined || payload.startMs === "" ? null : Number(payload.startMs),
+      endMs: payload.endMs === undefined || payload.endMs === "" ? null : Number(payload.endMs),
+    };
+    return annotations[index];
+  }
+
+  const result = await pool.query(
+    `
+      UPDATE corpus_annotation
+      SET error_type = $2,
+          note = $3,
+          start_ms = $4,
+          end_ms = $5
+      WHERE id = $1
+      RETURNING id, practice_record_id, annotator_user_id, error_type, note, start_ms, end_ms, created_at
+    `,
+    [
+      id,
+      payload.errorType,
+      payload.note || "",
+      payload.startMs === undefined || payload.startMs === "" ? null : Number(payload.startMs),
+      payload.endMs === undefined || payload.endMs === "" ? null : Number(payload.endMs),
+    ],
+  );
+  return result.rows[0] ? mapAnnotation(result.rows[0]) : null;
+}
+
+export async function deleteAnnotation(id) {
+  if (!hasDatabase()) {
+    const index = annotations.findIndex((annotation) => annotation.id === id);
+    if (index < 0) return false;
+    annotations.splice(index, 1);
+    return true;
+  }
+
+  const result = await pool.query("DELETE FROM corpus_annotation WHERE id = $1 RETURNING id", [id]);
+  return result.rowCount > 0;
 }
 
 export async function savePracticeEvaluation({ practiceRecordId, corpusItemId, audio, score }) {

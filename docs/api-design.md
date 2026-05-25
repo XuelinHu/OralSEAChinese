@@ -24,6 +24,10 @@
 | PUT | `/api/v1/admin/lessons/:id` | 管理端编辑课时 |
 | GET | `/api/v1/admin/practice-scores` | 管理端评分记录列表 |
 | GET | `/api/v1/admin/practice-scores/:id` | 管理端评分记录详情 |
+| GET | `/api/v1/admin/annotations` | 管理端标注列表，可按 `practiceRecordId` 筛选 |
+| POST | `/api/v1/admin/annotations` | 管理端新增人工标注 |
+| PUT | `/api/v1/admin/annotations/:id` | 管理端编辑人工标注 |
+| DELETE | `/api/v1/admin/annotations/:id` | 管理端删除人工标注 |
 
 `/api/v1/practice/evaluate` 在配置 PostgreSQL 后会保存练习记录和评分结果；无数据库时只返回评分结果和 `persistence.persisted=false`。
 

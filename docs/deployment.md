@@ -8,6 +8,12 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
+如果本机默认 `python` 不是已安装 FastAPI 的环境，后端冒烟测试可指定：
+
+```bash
+PYTHON_BIN=/home/xuelin/miniconda3/envs/rc-llm-eval/bin/python npm run smoke
+```
+
 ## Node.js 业务后端
 
 ```bash
