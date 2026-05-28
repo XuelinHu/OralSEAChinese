@@ -23,6 +23,31 @@ class FeedbackSegment(BaseModel):
     severity: Literal["info", "warning", "error"] = "info"
 
 
+class AudioFeatureSummary(BaseModel):
+    duration_ms: int
+    sample_rate: int
+    channels: int
+    voiced_ratio: float
+    silence_ratio: float
+    longest_silence_ms: int
+    pitch_coverage: float
+    mean_f0_hz: float | None = None
+
+
+class SyllableAnalysis(BaseModel):
+    syllable: str
+    hanzi: str | None = None
+    expected_tone: int | None = None
+    predicted_tone: int | None = None
+    start_ms: int
+    end_ms: int
+    tone_score: float
+    confidence: float
+    alignment_confidence: float = 0.0
+    alignment_method: str = "unknown"
+    message: str
+
+
 class EvaluateResponse(BaseModel):
     model_version: str
     overall_score: float
@@ -30,6 +55,8 @@ class EvaluateResponse(BaseModel):
     fluency_score: float
     tone_score: float
     feedback: list[FeedbackSegment]
+    audio_features: AudioFeatureSummary | None = None
+    syllable_analysis: list[SyllableAnalysis] = Field(default_factory=list)
 
 
 class TrainRequest(BaseModel):

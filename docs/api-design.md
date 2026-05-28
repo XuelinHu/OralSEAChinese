@@ -41,7 +41,7 @@
 | --- | --- | --- |
 | GET | `/health` | AI 服务健康检查 |
 | POST | `/api/v1/pronunciation/evaluate` | 发音评测 |
-| POST | `/api/v1/pronunciation/evaluate-audio` | 基于上传 WAV 音频的 `baseline-v1` 发音评测 |
+| POST | `/api/v1/pronunciation/evaluate-audio` | 基于上传 WAV 音频的 `tone-align-calibrated-v1` 发音评测，返回整段分数、音频特征和音节级声调分析 |
 | GET | `/api/v1/model/versions` | 模型版本列表 |
 | POST | `/api/v1/model/train` | 创建模型训练任务 |
 | POST | `/api/v1/audio/analyze` | 分析上传 WAV 音频的时长、采样率和声道数 |

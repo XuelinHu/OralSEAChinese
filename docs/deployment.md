@@ -8,6 +8,21 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
+如需用 PostgreSQL 中的人工声调标注校准本地声调评分：
+
+```bash
+cd ai_fastapi_postgresql/fastapi_service
+set -a; source ../../backend_node/.env; set +a
+python scripts/calibrate_tone_model.py
+```
+
+脚本会生成：
+
+```text
+ai_fastapi_postgresql/fastapi_service/models/tone_calibration.json
+ai_fastapi_postgresql/fastapi_service/models/tone_calibration_samples.json
+```
+
 如果本机默认 `python` 不是已安装 FastAPI 的环境，后端冒烟测试可指定：
 
 ```bash

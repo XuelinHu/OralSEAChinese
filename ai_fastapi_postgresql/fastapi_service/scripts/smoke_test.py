@@ -44,20 +44,36 @@ def main() -> None:
         files={"audio": ("sample.wav", _make_wav(), "audio/wav")},
     )
     assert model_response.status_code == 200, model_response.text
-    assert model_response.json()["model_version"] == "baseline-v1"
+    model_data = model_response.json()
+    assert model_data["model_version"] == "tone-align-calibrated-v1"
+    assert model_data["audio_features"]["duration_ms"] > 0
+    assert len(model_data["syllable_analysis"]) == 6
+    assert model_data["syllable_analysis"][0]["alignment_method"] == "energy-valley-v1"
+    versions_response = client.get("/api/v1/model/versions")
+    assert versions_response.status_code == 200, versions_response.text
+    assert any(item["version_code"] == "tone-align-calibrated-v1" for item in versions_response.json()["items"])
     print("FastAPI smoke test passed:", data["overall_score"])
 
 
 def _make_wav() -> bytes:
     import io
+    import math
+    import struct
     import wave
 
+    sample_rate = 16000
+    duration_seconds = 2
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as wav_file:
         wav_file.setnchannels(1)
         wav_file.setsampwidth(2)
-        wav_file.setframerate(16000)
-        wav_file.writeframes(b"\x00\x00" * 16000)
+        wav_file.setframerate(sample_rate)
+        frames = bytearray()
+        for index in range(sample_rate * duration_seconds):
+            frequency = 180 + 45 * (index / (sample_rate * duration_seconds))
+            sample = round(math.sin((2 * math.pi * frequency * index) / sample_rate) * 9000)
+            frames.extend(struct.pack("<h", sample))
+        wav_file.writeframes(bytes(frames))
     return buffer.getvalue()
 
 

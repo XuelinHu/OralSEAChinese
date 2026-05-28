@@ -236,8 +236,11 @@
 - Node 后端已通过 `/uploads/...` 提供本地音频访问。
 - FastAPI 已增加 `/api/v1/audio/analyze`，可分析 WAV 时长、采样率和声道数。
 - 已实现 `baseline-v1` 本地发音评分基线模型。
+- 已实现 `tone-segment-v1` 音节级声调分析原型模型。
+- 已实现 `tone-align-calibrated-v1` 轻量音节对齐与人工标注校准模型。
 - Node 后端已在收到录音文件后调用 FastAPI 音频评分接口。
-- `baseline-v1` 会提取时长、能量、有效语音占比、静音比例和最长停顿等特征。
+- `tone-align-calibrated-v1` 会提取时长、能量、有效语音占比、静音比例、最长停顿和基频走势，用能量谷值估算音节边界，并输出音节级声调分析。
+- 已新增 `scripts/calibrate_tone_model.py`，可从 `corpus_annotation` 的声调错误标注生成 `models/tone_calibration.json`。
 - 后续可在该接口基础上替换真实 ASR、声调识别和音素对齐模型。
 
 ### 6.6 后台录音详情与人工标注

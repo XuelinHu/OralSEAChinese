@@ -28,3 +28,14 @@ ON CONFLICT DO NOTHING;
 INSERT INTO model_version (version_code, model_type, description, is_active)
 VALUES ('mock-v1', 'pronunciation-evaluator', '规则占位版发音评分，用于跑通第一阶段业务闭环。', TRUE)
 ON CONFLICT DO NOTHING;
+
+INSERT INTO model_version (version_code, model_type, description, is_active)
+VALUES
+    ('baseline-v1', 'pronunciation-evaluator', '基于 WAV 音频时长、能量、有效语音占比和停顿特征的本地发音评分基线模型。', FALSE),
+    ('tone-segment-v1', 'pronunciation-evaluator', '增加基频走势、拼音声调解析和音节级声调反馈的原型模型。', FALSE),
+    ('tone-align-calibrated-v1', 'pronunciation-evaluator', '增加能量谷值音节对齐，并可加载人工标注生成的声调校准参数。', TRUE)
+ON CONFLICT DO NOTHING;
+
+UPDATE model_version
+SET is_active = version_code = 'tone-align-calibrated-v1'
+WHERE version_code IN ('mock-v1', 'baseline-v1', 'tone-segment-v1', 'tone-align-calibrated-v1');

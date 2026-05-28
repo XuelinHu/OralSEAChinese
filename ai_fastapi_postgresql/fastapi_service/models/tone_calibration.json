@@ -1,0 +1,36 @@
+{
+  "version": "tone-calibration-v1",
+  "sample_count": 24,
+  "tone_error_sample_count": 24,
+  "score_bias_by_expected_tone": {},
+  "error_threshold_by_expected_tone": {
+    "3": 60.0,
+    "2": 60.0
+  },
+  "observed_error_score_by_expected_tone": {
+    "3": {
+      "count": 14,
+      "average": 50.0,
+      "minimum": 42.0,
+      "maximum": 56.0
+    },
+    "2": {
+      "count": 10,
+      "average": 50.0,
+      "minimum": 42.0,
+      "maximum": 61.99
+    }
+  },
+  "classification_thresholds": {
+    "rising_slope": 0.08,
+    "falling_slope": -0.08,
+    "third_tone_dip": 0.08,
+    "third_tone_variation": 0.1,
+    "level_abs_slope": 0.07,
+    "level_variation": 0.18
+  },
+  "notes": "Generated from corpus_annotation rows where error_type='tone'. Current calibration uses negative score bias only when annotated errors score too high.",
+  "generated_at": "2026-05-27T15:02:11.040945+00:00",
+  "source_annotation_count": 7,
+  "media_root": "/ds1/workspace/ai/OralSEAChinese/backend_node"
+}

@@ -62,8 +62,20 @@ def model_versions() -> dict[str, list[dict[str, object]]]:
                 "version_code": "baseline-v1",
                 "model_type": "pronunciation-evaluator",
                 "description": "基于真实 WAV 音频时长、能量、有效语音占比和停顿特征的本地发音评分基线模型。",
+                "is_active": False,
+            },
+            {
+                "version_code": "tone-segment-v1",
+                "model_type": "pronunciation-evaluator",
+                "description": "在 baseline-v1 基础上增加基频走势、拼音声调解析和音节级声调反馈的原型模型。",
+                "is_active": False,
+            },
+            {
+                "version_code": "tone-align-calibrated-v1",
+                "model_type": "pronunciation-evaluator",
+                "description": "增加能量谷值音节对齐，并可加载人工标注生成的声调校准参数。",
                 "is_active": True,
-            }
+            },
         ]
     }
 
