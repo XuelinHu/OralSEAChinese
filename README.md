@@ -1,5 +1,15 @@
 # OralSEAChinese
 
+<p align="center">
+  <img height="20" src="https://img.shields.io/badge/flutter-configured-02569B?logo=flutter&amp;logoColor=white" />
+  <img height="20" src="https://img.shields.io/badge/react-19.2.3-61DAFB?logo=react&amp;logoColor=black" />
+  <img height="20" src="https://img.shields.io/badge/vite-7.2.7-646CFF?logo=vite&amp;logoColor=white" />
+  <img height="20" src="https://img.shields.io/badge/express-5.1.0-000000?logo=express&amp;logoColor=white" />
+  <img height="20" src="https://img.shields.io/badge/fastapi-0.121.3-009688?logo=fastapi&amp;logoColor=white" />
+  <img height="20" src="https://img.shields.io/badge/postgresql-used-4169E1?logo=postgresql&amp;logoColor=white" />
+  <img height="20" src="https://img.shields.io/badge/docker_compose-configured-2496ED?logo=docker&amp;logoColor=white" />
+</p>
+
 面向马来西亚学习者的中文发音学习系统。
 
 ## 工程结构
